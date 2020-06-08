@@ -22,6 +22,7 @@ interface Data {
   longitude: number;
   city: string;
   uf: string;
+  image_url: string;
   items: [
     {
       title: string;
@@ -72,7 +73,7 @@ const Detail: React.FC = () => {
         <Image
           style={styles.pointImage}
           source={{
-            uri: data.image,
+            uri: data.image_url,
           }}
         />
         <Text style={styles.pointName}>{data.name}</Text>

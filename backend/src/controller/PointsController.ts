@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import knex from '../database/connection';
-
+import ipAddress from '../config/ip';
 export default class PointsController {
   async index(req: Request, res: Response) {
     const { city, uf, items } = req.query;
@@ -15,11 +15,18 @@ export default class PointsController {
       .distinct()
       .select('points.*');
 
-    return res.json(points);
+    return res.json(
+      points.map((point) => {
+        const image_url = `http://${ipAddress}:3333/uploads/${point.image}`;
+        return {
+          ...point,
+          image_url,
+        };
+      })
+    );
   }
   async create(req: Request, res: Response) {
     const {
-      id,
       image,
       name,
       email,
@@ -31,8 +38,7 @@ export default class PointsController {
       itens,
     } = req.body;
     const point = {
-      image:
-        'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',
+      image: req.file.filename,
       name,
       email,
       whatsapp,
@@ -44,12 +50,15 @@ export default class PointsController {
     const trx = await knex.transaction();
     const ids = await trx('points').insert(point);
     const point_id = ids[0];
-    const pointItens = itens.map((item_id: number) => {
-      return {
-        item_id,
-        point_id,
-      };
-    });
+    const pointItens = itens
+      .split(',')
+      .map((item: string) => Number(item.trim()))
+      .map((item_id: number) => {
+        return {
+          item_id,
+          point_id,
+        };
+      });
     try {
       await trx('points_items').insert(pointItens);
       await trx.commit();
@@ -66,14 +75,15 @@ export default class PointsController {
 
   async show(req: Request, res: Response) {
     const { id } = req.params;
-    const piont = await knex('points').where('id', id).first();
-    if (!piont) {
+    const point = await knex('points').where('id', id).first();
+    if (!point) {
       return res.status(400).json({ message: 'Point not found' });
     }
+    const image_url = `http://${ipAddress}:3333/uploads/${point.image}`;
     const items = await knex('items')
       .join('points_items', 'items.id', '=', 'points_items.item_id')
       .where('points_items.point_id', id)
       .select('title');
-    return res.json({ ...piont, items });
+    return res.json({ ...point, image_url, items });
   }
 }

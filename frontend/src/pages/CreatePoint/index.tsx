@@ -7,6 +7,7 @@ import api from '../../services/api';
 import './styles.css';
 import logo from '../../assets/logo.svg';
 import { LeafletMouseEvent } from 'leaflet';
+import Dropzone from '../../components/Dropzone';
 
 interface Item {
   id: number;
@@ -130,6 +131,7 @@ const CreatePoint: React.FC = () => {
           Cadastro do <br />
           ponto de coleta
         </h1>
+        <Dropzone />
         <fieldset>
           <legend>
             <h2>Dados</h2>
